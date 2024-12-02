@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+'''
+To Test the server, launch the server with
+./app.py
+
+Then sent the request with curl:
+curl -X POST http://127.0.0.1:5000/recommend \
+-H "Content-Type: application/json" \
+-d '{"ingredients": "chicken, garlic, onion"}'
+'''
 import os
 import pandas as pd
 import faiss
