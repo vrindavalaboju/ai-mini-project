@@ -1,0 +1,203 @@
+
+.logo-cont{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.search-container{
+  display: flex;
+}
+.circular-button {
+  width: 60px; /* Diameter of the button */
+  height: 60px; /* Diameter of the button */
+  border-radius: 50%; /* Makes it a perfect circle */
+  background-color: #717171; /* Button background color */
+  border-color: #717171;
+  color: white; /* Icon color */
+  border: none; /* Removes default border */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer; /* Pointer cursor on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.circular-button:hover {
+  background-color: #545454; /* Darker green on hover */
+  transform: scale(1.1); /* Enlarges button on hover */
+}
+
+.circular-button:active {
+  transform: scale(0.9); /* Shrinks button slightly when pressed */
+}
+
+.search-icon {
+  font-size: 1.5rem; /* Icon size */
+}
+
+.search-bar{
+  width: 600px;
+  padding: 10px 20px;
+  border-radius: 50px; /* Fully rounded corners */
+  outline: none;
+  font-size: 1rem;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* General Reset and Font Styling */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #efefef;
+  color: #333;
+}
+
+/* App Container */
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Header Styling */
+h1 {
+  color: #4CAF50;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+/* Input Section Styling */
+input {
+  width: 300px;
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+/* Recipe List Container */
+.recipe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+  margin-top: 20px;
+}
+
+/* Recipe Card Styling */
+.recipe-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+.recipe-card h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.recipe-card p {
+  margin-top: 10px;
+  font-size: 1rem;
+  color: #666;
+}
+
+/* Recipe Details Modal */
+.recipe-details {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-width: 500px;
+  width: 90%;
+}
+
+.recipe-details h2 {
+  margin-top: 0;
+  color: #4CAF50;
+}
+
+.recipe-details p {
+  margin: 10px 0;
+  color: #333;
+  line-height: 1.6;
+}
+
+.recipe-details button {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 20px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.recipe-details button:hover {
+  background-color: #d32f2f;
+}
+
+/* Overlay for Modal */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  input {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .recipe-list {
+    grid-template-columns: 1fr;
+  }
+}
