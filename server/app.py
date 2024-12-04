@@ -1,118 +1,122 @@
 #!/usr/bin/env python
-'''
-To Test the server, launch the server with
-./app.py
-
-Then sent the request with curl:
-curl -X POST http://127.0.0.1:5000/recommend \
--H "Content-Type: application/json" \
--d '{"ingredients": "chicken, garlic, onion"}'
-'''
 import os
 import pandas as pd
 import faiss
 import numpy as np
-from openai import OpenAI
 from flask import Flask, request, jsonify
+import openai
+from openai import OpenAI
+import time
 
-app=Flask(__name__)
+app = Flask(__name__)
+"""
+To test, first launch app.py:
+./app.py
+
+Then use a curl command:
+curl -X POST http://127.0.0.1:5000/recommend \
+-H "Content-Type: application/json" \
+-d '{"ingredients": "spinach", "tags": "vegan"}'
+"""
+
 # Load dataset
-recipes_df = pd.read_csv("shortened_recipes.csv")  # Ensure it has an "ingredients" column
+recipes_df = pd.read_csv("shortened_recipes.csv")  # Ensure it has a "tags" column
 
+# Add textual representation including tags
 def textual_representation(row):
-    textual_representation=f"""Recipe: {row['name']}
+    tags = row.get("tags", "no tags available")
+    return f"""Recipe: {row['name']}
 Cook time: {row['minutes']} minutes
 Description: {row['description']}
 Ingredients: {row['ingredients']}
+Tags: {tags}
 """
-    return textual_representation
+
+# Generate textual representation
+recipes_df["textual_representation"] = recipes_df.apply(textual_representation, axis=1)
+
+# OpenAI API configs
+os.environ['OPENAI_API_KEY'] = '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'
+client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+EMBEDDING_MODEL = "text-embedding-3-small"
+
+# Load or create Faiss index
+index_file = 'index.faiss'
+dim = 1536  # Embedding dimension
+index = faiss.IndexFlatL2(dim)
+
+if os.path.exists(index_file):
+    print("Index file exists, reading...")
+    index = faiss.read_index(index_file)
+else:
+    print("Index not found, creating...")
+    index = faiss.IndexFlatL2(dim)
+    embeddings = np.zeros((len(recipes_df), dim), dtype="float32")
+
+    for i, text in enumerate(recipes_df["textual_representation"]):
+        try:
+            embedding = client.embeddings.create(input=[text], model=EMBEDDING_MODEL).data[0].embedding
+            embeddings[i] = np.array(embedding, dtype="float32")
+        except Exception as e:
+            print(f"Error fetching embedding for recipe {i}: {e}")
+
+    index.add(embeddings)
+    faiss.write_index(index, index_file)
+    print(f"Index saved with {index.ntotal} entries.")
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
     try:
-        data=request.json
-        if not data or "ingredients" not in data:
-            return jsonify({"error": "Invalid input. 'ingredients' field is required."})
+        # Parse the input JSON
+        data = request.json
+        if not data:
+            return jsonify({"error": "Invalid input. JSON payload is required."}), 400
+
+        ingredients = data.get("ingredients", "")
+        tags = data.get("tags", "")
+
+        # Create a descriptive query prompt to improve embeddings
+        query_prompt = f"Find a recipe that includes: {ingredients}"
+        if tags:
+            query_prompt += f" and matches the tags: {tags}"
 
         # Generate embedding for user input
-        ingredients=data["ingredients"]
-        user_embedding = get_embedding(ingredients).reshape(1, -1)
+        user_embedding = np.array(
+            client.embeddings.create(input=[query_prompt], model=EMBEDDING_MODEL).data[0].embedding,
+            dtype="float32"
+        ).reshape(1, -1)
 
-        # Query Faiss index
-        distances, indices = index.search(user_embedding, 5)  # Retrieve top 5 results
+        # Query Faiss index for top 5 similar recipes
+        distances, indices = index.search(user_embedding, 5)
+
+        # Check if any matches were found
+        if indices[0][0] == -1:
+            return jsonify({"message": "No matching recipes found."}), 404
 
         # Fetch matching recipes
         matching_recipes = recipes_df.iloc[indices[0]].to_dict(orient="records")
 
-        return jsonify({"recipes": matching_recipes})
+        # Filter results by tags if tags are specified
+        if tags:
+            filtered_recipes = [recipe for recipe in matching_recipes if all(tag in recipe["tags"] for tag in tags.split(","))]
+        else:
+            filtered_recipes = matching_recipes
+
+        # Extract recipe names and details
+        results = [
+            {"name": recipe["name"], "distance": float(dist), "details": recipe}
+            for recipe, dist in zip(filtered_recipes, distances[0])
+        ]
+
+        return jsonify({
+            "recipes": results,
+            "recipe_names": [recipe["name"] for recipe in filtered_recipes]
+        })
+
     except Exception as e:
-        return jsonify({"error":f"An error occurred: {str(e)}"}),500
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
-#test printing
-print(recipes_df.iloc[:5].apply(textual_representation, axis=1).values[0])
 
-#Save the textual representation as a column in the dataset
-recipes_df["textual_representation"]=recipes_df.apply(textual_representation, axis=1)
-
-#OpenAI API configs
-os.environ['OPENAI_API_KEY']='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'
-client = OpenAI(
-  api_key=os.environ['OPENAI_API_KEY'],  # this is also the default, it can be omitted
-)
-index_file='index.faiss'
-dim = 1536 #embedding dimension as returned by OpenAi
-index = faiss.IndexFlatL2(dim)
-batch_size = 50 #number of recipes to read in per batch
-
-def get_embedding(text, model="text-embedding-3-small"):
-   text = text.replace("\n", " ")
-   response=client.embeddings.create(input = [text], model=model)
-   return np.array(response.data[0].embedding, dtype="float32")
-
-if os.path.exists(index_file):
-    print("Index file exists, reading...")
-    index=faiss.read_index('index.faiss')
-else:
-    print("Index not found, creating...")
-
-    # Initialize Faiss index
-    index=faiss.IndexFlatL2(dim)
-    X = np.zeros((len(recipes_df), dim), dtype='float32')
-
-    for i in range(0, len(recipes_df), batch_size):
-        batch=recipes_df.iloc[i:i+batch_size]
-        embeddings=[]
-
-        for j, text in enumerate(batch["textual_representation"]):
-            try:
-                #getting the embeddings from OpenAI
-                embedding=get_embedding(text, model="text-embedding-3-small")
-                embeddings.append(embedding)
-
-            except Exception as e:
-                print(f"Error fetching embedding for recipe {i + j}: {e}")
-        if embeddings:
-            embeddings_np=np.array(embeddings, dtype="float32")
-            index.add(embeddings_np)
-            print(f"Batch{i// batch_size+1} processed and added to index.")
-
-    # save the index
-    print("Saving index")
-    faiss.write_index(index, 'index.faiss')
-    print(f"Index loaded with {index.ntotal} entries.")
-
-    #check that the number of embeddings are the same as the number of recipes
-    print(f"Number of embeddings in index: {index.ntotal}")
-    print(f"Number of recipes: {len(recipes_df)}")
-    if index.ntotal==len(recipes_df):
-        print("All recipes are embedded correctly!")
-    else:
-        print(f"Some embeddings are missing! ({len(recipes_df)-index.ntotal} missing)")
-    
-    index=faiss.read_index("index.faiss")
-    
-
-# Start Flask server
 if __name__ == '__main__':
     app.run(debug=True)
