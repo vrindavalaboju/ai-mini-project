@@ -7,8 +7,10 @@ from flask import Flask, request, jsonify
 import openai
 from openai import OpenAI
 import time
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 """
 To test, first launch app.py:
 ./app.py

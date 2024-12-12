@@ -11,8 +11,8 @@
   width: 60px; /* Diameter of the button */
   height: 60px; /* Diameter of the button */
   border-radius: 50%; /* Makes it a perfect circle */
-  background-color: #717171; /* Button background color */
-  border-color: #717171;
+  background-color: #3a5a40; /* Button background color */
+  border-color: #3a5a40;
   color: white; /* Icon color */
   border: none; /* Removes default border */
   display: flex;
@@ -43,6 +43,8 @@
   outline: none;
   font-size: 1rem;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  background-color: #fffdfd5d;
+  
 }
 
 /* General Reset and Font Styling */
@@ -50,7 +52,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Arial', sans-serif;
-  background-color: #efefef;
+  background-color: #DFE6DA;
   color: #333;
 }
 

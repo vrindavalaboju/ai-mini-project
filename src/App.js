@@ -10,8 +10,8 @@ const App = () => {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 
-  const handleSearch = async (ingredients) => {
-    const results = await fetchRecipes(ingredients);
+  const handleSearch = async (ingredients, tags = '') => {
+    const results = await fetchRecipes(ingredients, tags);
     setRecipes(results);
   };
 

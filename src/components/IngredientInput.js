@@ -4,10 +4,11 @@ import SearchIcon from '@mui/icons-material/Search';
 
 const IngredientInput = ({ onSearch }) => {
   const [ingredients, setIngredients] = useState('');
+  const [tags, setTags] = useState('');
 
   const handleSearch = () => {
     if (ingredients.trim()) {
-      onSearch(ingredients.split(',').map(ing => ing.trim()));
+      onSearch(ingredients.split(',').map(ing => ing.trim()), tags);
     }
   };
 
